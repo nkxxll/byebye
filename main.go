@@ -8,6 +8,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"golang.org/x/term"
 )
 
 var style = lipgloss.NewStyle().
@@ -15,8 +16,19 @@ var style = lipgloss.NewStyle().
 	BorderForeground(lipgloss.Color("12")).
 	Align(lipgloss.Center).
 	Bold(true).
-	Padding(2).
-	Margin(1)
+	Padding(2)
+
+func center(s string) (width int, hight int){
+    textWidth, textHeight := lipgloss.Size(s)
+    termWidth, termHeight, err := term.GetSize(int(os.Stdout.Fd()))
+    if err != nil {
+        fmt.Println(err)
+    }
+    wMargin := (termWidth - textWidth) / 2
+    hMargin := (termHeight - textHeight) / 2
+
+    return wMargin, hMargin
+}
 
 type model struct {
 	cursor   int
@@ -116,7 +128,12 @@ func (m model) View() string {
 
 	s += "\nPress q to quit.\n\n\n"
 
-	return style.Render(s)
+    // center menu
+    marginW, marginH := center(style.Render(s))
+
+    styleCentered := style.Copy().Margin(marginH, marginW)
+
+	return styleCentered.Render(s)
 }
 
 func main() {
