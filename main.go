@@ -7,7 +7,16 @@ import (
 	"os/exec"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
+
+var style = lipgloss.NewStyle().
+	BorderStyle(lipgloss.RoundedBorder()).
+	BorderForeground(lipgloss.Color("12")).
+	Align(lipgloss.Center).
+	Bold(true).
+	Padding(2).
+	Margin(1)
 
 type model struct {
 	cursor   int
@@ -16,43 +25,43 @@ type model struct {
 }
 
 func end(choice string) {
-    switch choice {
-    case "Suspend":
-        cmd := exec.Command("systemctl", "suspend")
-        err := cmd.Run()
+	switch choice {
+	case "Suspend":
+		cmd := exec.Command("systemctl", "suspend")
+		err := cmd.Run()
 
-        if err != nil {
-            log.Fatal(err)
-        }
-    case "Logout":
-        cmd := exec.Command("kill", "-9", "-1")
-        err := cmd.Run()
+		if err != nil {
+			log.Fatal(err)
+		}
+	case "Logout":
+		cmd := exec.Command("kill", "-9", "-1")
+		err := cmd.Run()
 
-        if err != nil {
-            log.Fatal(err)
-        }
-    case "Shutdown":
-        cmd := exec.Command("shutdown", "now")
-        err := cmd.Run()
+		if err != nil {
+			log.Fatal(err)
+		}
+	case "Shutdown":
+		cmd := exec.Command("shutdown", "now")
+		err := cmd.Run()
 
-        if err != nil {
-            log.Fatal(err)
-        }
-    case "Restart":
-        cmd := exec.Command("shutdown", "-r")
-        err := cmd.Run()
+		if err != nil {
+			log.Fatal(err)
+		}
+	case "Restart":
+		cmd := exec.Command("shutdown", "-r")
+		err := cmd.Run()
 
-        if err != nil {
-            log.Fatal(err)
-        }
-    case "Hibernate":
-        cmd := exec.Command("systemctl", "hibernate")
-        err := cmd.Run()
+		if err != nil {
+			log.Fatal(err)
+		}
+	case "Hibernate":
+		cmd := exec.Command("systemctl", "hibernate")
+		err := cmd.Run()
 
-        if err != nil {
-            log.Fatal(err)
-        }
-    }
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 }
 
 func initialModel() model {
@@ -85,8 +94,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor++
 			}
 		case "enter":
-            end(m.choices[m.cursor])
-            return m, tea.Quit
+			end(m.choices[m.cursor])
+			return m, tea.Quit
 		}
 	}
 
@@ -95,7 +104,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // TODO some color would be nice
 func (m model) View() string {
-	s := "\n\n\t\tWhere do you want to GO?\n\n"
+	s := "\n\nWhere do you want to GO?\n\n"
 
 	for i, choice := range m.choices {
 		cursor := " "
@@ -103,12 +112,12 @@ func (m model) View() string {
 			cursor = "❯"
 		}
 
-		s += fmt.Sprintf("\t\t%s %s\n", cursor, choice)
+		s += fmt.Sprintf("%s %s\n", cursor, choice)
 	}
 
-	s += "\n\t\tPress q to quit.\n\n\n"
+	s += "\nPress q to quit.\n\n\n"
 
-	return s
+	return style.Render(s)
 }
 
 func main() {
