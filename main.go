@@ -102,7 +102,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// TODO some color would be nice
 func (m model) View() string {
 	s := "\n\nWhere do you want to GO?\n\n"
 
