@@ -12,7 +12,7 @@ import (
 )
 
 var style = lipgloss.NewStyle().
-	BorderStyle(lipgloss.RoundedBorder()).
+	BorderStyle(lipgloss.DoubleBorder()).
 	BorderForeground(lipgloss.Color("12")).
 	Align(lipgloss.Center).
 	Bold(true).
