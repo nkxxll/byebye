@@ -11,12 +11,11 @@ import (
 	"golang.org/x/term"
 )
 
-var style = lipgloss.NewStyle().
-	BorderStyle(lipgloss.DoubleBorder()).
-	BorderForeground(lipgloss.Color("12")).
-	Align(lipgloss.Center).
-	Bold(true).
-	Padding(2)
+var (
+	heading    = lipgloss.NewStyle().Bold(true).Margin(1, 0)
+	notChoosen = lipgloss.NewStyle().Bold(true).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("12")).Width(14).Padding(1)
+	choosen    = lipgloss.NewStyle().Foreground(lipgloss.Color("5")).Bold(true).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("5")).Width(14).Padding(1)
+)
 
 func center(s string) (width int, hight int) {
 	textWidth, textHeight := lipgloss.Size(s)
@@ -36,7 +35,7 @@ const (
 )
 
 func getDisplay() int {
-    display := os.Getenv("XDG_SESSION_TYPE")
+	display := os.Getenv("XDG_SESSION_TYPE")
 	if display == "x11" {
 		return x11
 	} else if display == "wayland" {
@@ -148,23 +147,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	s := "\n\nWhere do you want to GO?\n\n"
+	s := heading.Render("Where do you want to GO?")
 
 	for i, choice := range m.choices {
 		cursor := " "
+		var line string
 		if m.cursor == i {
 			cursor = "❯"
+			line = choosen.Render(fmt.Sprintf("%s %s", cursor, choice))
+		} else {
+			line = notChoosen.Render(fmt.Sprintf("%s %s", cursor, choice))
 		}
-
-		s += fmt.Sprintf("%s %s\n", cursor, choice)
+		s = lipgloss.JoinVertical(lipgloss.Center, s, line)
 	}
 
-	s += "\nPress q to quit.\n\n\n"
+	s = lipgloss.JoinVertical(lipgloss.Center, s, heading.Render("Press q to quit."))
 
 	// center menu
-	marginW, marginH := center(style.Render(s))
+	marginW, marginH := center(s)
 
-	styleCentered := style.Copy().Margin(marginH, marginW)
+	styleCentered := lipgloss.NewStyle().Margin(marginH, marginW)
 
 	return styleCentered.Render(s)
 }
