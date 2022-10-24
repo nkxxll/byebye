@@ -18,16 +18,32 @@ var style = lipgloss.NewStyle().
 	Bold(true).
 	Padding(2)
 
-func center(s string) (width int, hight int){
-    textWidth, textHeight := lipgloss.Size(s)
-    termWidth, termHeight, err := term.GetSize(int(os.Stdout.Fd()))
-    if err != nil {
-        fmt.Println(err)
-    }
-    wMargin := (termWidth - textWidth) / 2
-    hMargin := (termHeight - textHeight) / 2
+func center(s string) (width int, hight int) {
+	textWidth, textHeight := lipgloss.Size(s)
+	termWidth, termHeight, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		fmt.Println(err)
+	}
+	wMargin := (termWidth - textWidth) / 2
+	hMargin := (termHeight - textHeight) / 2
 
-    return wMargin, hMargin
+	return wMargin, hMargin
+}
+
+const (
+	x11     = iota
+	wayland = iota
+)
+
+func getDisplay() int {
+    display := os.Getenv("XDG_SESSION_TYPE")
+	if display == "x11" {
+		return x11
+	} else if display == "wayland" {
+		return wayland
+	} else {
+		return -1
+	}
 }
 
 type model struct {
@@ -45,13 +61,23 @@ func end(choice string) {
 		if err != nil {
 			log.Fatal(err)
 		}
-    case "Lock":
-		cmd := exec.Command("swaylock", "-c", "000000", "-e")
-		err := cmd.Run()
+	case "Lock":
+		if getDisplay() == x11 {
 
-		if err != nil {
-			log.Fatal(err)
+			cmd := exec.Command("xdg-screensaver", "lock")
+			xerr := cmd.Run()
+			if xerr != nil {
+				log.Fatal(xerr)
+			}
+		} else {
+
+			cmd := exec.Command("swaylock", "-c", "000000", "-e")
+			werr := cmd.Run()
+			if werr != nil {
+				log.Fatal(werr)
+			}
 		}
+
 	case "Logout":
 		cmd := exec.Command("kill", "-9", "-1")
 		err := cmd.Run()
@@ -135,10 +161,10 @@ func (m model) View() string {
 
 	s += "\nPress q to quit.\n\n\n"
 
-    // center menu
-    marginW, marginH := center(style.Render(s))
+	// center menu
+	marginW, marginH := center(style.Render(s))
 
-    styleCentered := style.Copy().Margin(marginH, marginW)
+	styleCentered := style.Copy().Margin(marginH, marginW)
 
 	return styleCentered.Render(s)
 }
