@@ -45,6 +45,13 @@ func end(choice string) {
 		if err != nil {
 			log.Fatal(err)
 		}
+    case "Lock":
+		cmd := exec.Command("swaylock")
+		err := cmd.Run()
+
+		if err != nil {
+			log.Fatal(err)
+		}
 	case "Logout":
 		cmd := exec.Command("kill", "-9", "-1")
 		err := cmd.Run()
@@ -78,7 +85,7 @@ func end(choice string) {
 
 func initialModel() model {
 	return model{
-		choices: []string{"Suspend", "Logout", "Shutdown", "Restart", "Hibernate"},
+		choices: []string{"Suspend", "Lock", "Logout", "Shutdown", "Restart", "Hibernate"},
 
 		// A map which indicates which choices are selected. We're using
 		// the  map like a mathematical set. The keys refer to the indexes
