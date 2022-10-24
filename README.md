@@ -6,4 +6,6 @@ byebye is a command line interface to logout suspend hibernate shutdown reboot f
 
 ## TODO
 
-- [ ] new command: xdg-screensaver lock
+- [x] new command: xdg-screensaver lock
+- [ ] idea make number shortcuts for the options
+
