@@ -46,7 +46,7 @@ func end(choice string) {
 			log.Fatal(err)
 		}
     case "Lock":
-		cmd := exec.Command("swaylock")
+		cmd := exec.Command("swaylock", "-c", "000000", "-e")
 		err := cmd.Run()
 
 		if err != nil {
