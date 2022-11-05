@@ -1,6 +1,7 @@
 package main
 
 import (
+    "strconv"
 	"fmt"
 	"log"
 	"os"
@@ -15,6 +16,15 @@ var (
 	heading    = lipgloss.NewStyle().Bold(true).Margin(1, 0)
 	notChoosen = lipgloss.NewStyle().Bold(true).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("12")).Width(14).Padding(1)
 	choosen    = lipgloss.NewStyle().Foreground(lipgloss.Color("5")).Bold(true).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("5")).Width(14).Padding(1)
+)
+
+const (
+	Suspend  = iota
+	Lock     = iota
+	Logout   = iota
+	Shutdown = iota
+	Restart   = iota
+    Hibernate = iota
 )
 
 func center(s string) (width int, hight int) {
@@ -137,6 +147,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.cursor < len(m.choices)-1 {
 				m.cursor++
 			}
+		case strconv.Itoa(Suspend + 1):
+			end("Suspend")
+			return m, tea.Quit
+		case strconv.Itoa(Lock + 1):
+			end("Lock")
+			return m, tea.Quit
+		case strconv.Itoa(Logout + 1):
+			end("Logout")
+			return m, tea.Quit
+		case strconv.Itoa(Shutdown + 1):
+			end("Shutdown")
+			return m, tea.Quit
+		case strconv.Itoa(Restart + 1):
+			end("Restart")
+			return m, tea.Quit
+		case strconv.Itoa(Hibernate + 1):
+			end("Hibernate")
+			return m, tea.Quit
 		case "enter":
 			end(m.choices[m.cursor])
 			return m, tea.Quit
