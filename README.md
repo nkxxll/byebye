@@ -1,11 +1,7 @@
-# REAMDE for byebye
+# byebye
 
-## byebye
+`byebye` is a command line interface to logout, lock, suspend, hibernate, shutdown, reboot, from the command line on every Linux system (with xdg-screensaver on X11 or swaylock on wayland).
 
-byebye is a command line interface to logout suspend hibernate shutdown reboot from command line on every Linux system.
+## Screenshot
 
-## TODO
-
-- [x] new command: xdg-screensaver lock
-- [ ] idea make number shortcuts for the options
-
+![`byebye` screenshot](./img/screenshot.png)
