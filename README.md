@@ -5,3 +5,8 @@
 ## Screenshot
 
 ![`byebye` screenshot](./img/screenshot.png)
+
+## Contribution
+
+If you see a best practice broken somewhere feel free to make a PR and explain
+it to me I am eager to learn :) !
