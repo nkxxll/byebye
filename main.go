@@ -15,7 +15,7 @@ import (
 var (
 	heading    = lipgloss.NewStyle().Bold(true).Margin(1, 0)
 	notChoosen = lipgloss.NewStyle().Bold(true).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("12")).Width(14).Padding(1)
-	choosen    = lipgloss.NewStyle().Foreground(lipgloss.Color("5")).Bold(true).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("5")).Width(14).Padding(1)
+	choosen    = lipgloss.NewStyle().Foreground(lipgloss.Color("5")).Bold(true).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("9")).Width(14).Padding(1)
 )
 
 const (
