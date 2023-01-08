@@ -1,43 +1,31 @@
 package main
 
 import (
-    "strconv"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
+	"strconv"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"golang.org/x/term"
 )
 
 var (
-	heading    = lipgloss.NewStyle().Bold(true).Margin(1, 0)
-	notChoosen = lipgloss.NewStyle().Bold(true).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("12")).Width(14).Padding(1)
-	choosen    = lipgloss.NewStyle().Foreground(lipgloss.Color("5")).Bold(true).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("5")).Width(14).Padding(1)
+	termWidth, termHight int
+	heading              = lipgloss.NewStyle().Bold(true).Margin(1, 0)
+	notChoosen           = lipgloss.NewStyle().Bold(true).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("12")).Width(14).Padding(1)
+	choosen              = lipgloss.NewStyle().Foreground(lipgloss.Color("5")).Bold(true).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("5")).Width(14).Padding(1)
 )
 
 const (
-	Suspend  = iota
-	Lock     = iota
-	Logout   = iota
-	Shutdown = iota
+	Suspend   = iota
+	Lock      = iota
+	Logout    = iota
+	Shutdown  = iota
 	Restart   = iota
-    Hibernate = iota
+	Hibernate = iota
 )
-
-func center(s string) (width int, hight int) {
-	textWidth, textHeight := lipgloss.Size(s)
-	termWidth, termHeight, err := term.GetSize(int(os.Stdout.Fd()))
-	if err != nil {
-		fmt.Println(err)
-	}
-	wMargin := (termWidth - textWidth) / 2
-	hMargin := (termHeight - textHeight) / 2
-
-	return wMargin, hMargin
-}
 
 const (
 	x11     = iota
@@ -135,6 +123,8 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		termWidth, termHight = msg.Width, msg.Height
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q", "esc":
@@ -191,12 +181,10 @@ func (m model) View() string {
 
 	s = lipgloss.JoinVertical(lipgloss.Center, s, heading.Render("Press q to quit."))
 
-	// center menu
-	marginW, marginH := center(s)
+	textWidth, textHeight := lipgloss.Size(s)
+	marginW, marginH := (termWidth-textWidth)/2, (termHight-textHeight)/2
 
-	styleCentered := lipgloss.NewStyle().Margin(marginH, marginW)
-
-	return styleCentered.Render(s)
+	return lipgloss.NewStyle().Margin(marginH, marginW).Render(s)
 }
 
 func main() {
