@@ -1,4 +1,4 @@
-module byebye
+module github.com/d1psy-sh/byebye
 
 go 1.19
 
