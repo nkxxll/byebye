@@ -13,10 +13,7 @@ import (
 )
 
 var (
-	termWidth, termHight int
-	heading              = lipgloss.NewStyle().Bold(true).Margin(1, 0)
-	notChoosen           = lipgloss.NewStyle().Bold(true).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("12")).Width(14).Padding(1)
-	choosen              = lipgloss.NewStyle().Foreground(lipgloss.Color("5")).Bold(true).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("5")).Width(14).Padding(1)
+	termWidth, termHeight int
 )
 
 const (
@@ -113,7 +110,7 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		termWidth, termHight = msg.Width, msg.Height
+		termWidth, termHeight = msg.Width, msg.Height
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q", "esc":
@@ -157,26 +154,88 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	s := heading.Render("Where do you want to GO?")
+	// Use terminal ANSI colors for better theme compatibility
+	dimColor := lipgloss.ANSIColor(8)       // bright black / dim
+	accentColor := lipgloss.ANSIColor(4)    // blue
+	highlightColor := lipgloss.ANSIColor(6) // cyan
 
-	for i, choice := range m.choices {
-		cursor := " "
-		var line string
-		if m.cursor == i {
-			cursor = "❯"
-			line = choosen.Render(fmt.Sprintf("%s %s", cursor, choice))
-		} else {
-			line = notChoosen.Render(fmt.Sprintf("%s %s", cursor, choice))
-		}
-		s = lipgloss.JoinVertical(lipgloss.Center, s, line)
+	// Responsive: use 2 columns if terminal is small (< 40 height or < 60 width)
+	useColumns := termHeight < 40 || termWidth < 60
+
+	// Styles
+	titleStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(accentColor).
+		MarginBottom(1)
+
+	subtitleStyle := lipgloss.NewStyle().
+		Foreground(dimColor).
+		Italic(true)
+
+	itemWidth := 16
+	if useColumns && termWidth < 50 {
+		itemWidth = 12
 	}
 
-	s = lipgloss.JoinVertical(lipgloss.Center, s, heading.Render("Press q to quit."))
+	selectedStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(highlightColor).
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(highlightColor).
+		Width(itemWidth).
+		Align(lipgloss.Center).
+		Padding(0, 1)
 
-	textWidth, textHeight := lipgloss.Size(s)
-	marginW, marginH := (termWidth-textWidth)/2, (termHight-textHeight)/2
+	normalStyle := lipgloss.NewStyle().
+		Foreground(dimColor).
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(dimColor).
+		Width(itemWidth).
+		Align(lipgloss.Center).
+		Padding(0, 1)
 
-	return lipgloss.NewStyle().Margin(marginH, marginW).Render(s)
+	// Build option items
+	var items []string
+	for i, choice := range m.choices {
+		label := fmt.Sprintf("%d %s", i+1, choice)
+		if m.cursor == i {
+			items = append(items, selectedStyle.Render(label))
+		} else {
+			items = append(items, normalStyle.Render(label))
+		}
+	}
+
+	// Layout options
+	var optionsBlock string
+	if useColumns {
+		// Two-column layout
+		var rows []string
+		for i := 0; i < len(items); i += 2 {
+			if i+1 < len(items) {
+				row := lipgloss.JoinHorizontal(lipgloss.Top, items[i], "  ", items[i+1])
+				rows = append(rows, row)
+			} else {
+				rows = append(rows, items[i])
+			}
+		}
+		optionsBlock = lipgloss.JoinVertical(lipgloss.Center, rows...)
+	} else {
+		// Single-column layout
+		optionsBlock = lipgloss.JoinVertical(lipgloss.Center, items...)
+	}
+
+	// Compose final view
+	title := titleStyle.Render("Where do you want to GO?")
+	hint := subtitleStyle.Render("↑/↓ navigate • enter select • q quit")
+
+	content := lipgloss.JoinVertical(lipgloss.Center, title, "", optionsBlock, "", hint)
+
+	// Center in terminal
+	contentWidth, contentHeight := lipgloss.Size(content)
+	marginH := max((termHeight-contentHeight)/2, 0)
+	marginW := max((termWidth-contentWidth)/2, 0)
+
+	return lipgloss.NewStyle().Margin(marginH, marginW).Render(content)
 }
 
 func main() {
