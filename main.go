@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -22,26 +23,11 @@ const (
 	Suspend   = iota
 	Lock      = iota
 	Logout    = iota
+	Sleep     = iota
 	Shutdown  = iota
 	Restart   = iota
 	Hibernate = iota
 )
-
-const (
-	x11     = iota
-	wayland = iota
-)
-
-func getDisplay() int {
-	display := os.Getenv("XDG_SESSION_TYPE")
-	if display == "x11" {
-		return x11
-	} else if display == "wayland" {
-		return wayland
-	} else {
-		return -1
-	}
-}
 
 type model struct {
 	cursor   int
@@ -50,65 +36,68 @@ type model struct {
 }
 
 func end(choice string) {
-	switch choice {
-	case "Suspend":
-		cmd := exec.Command("systemctl", "suspend")
-		err := cmd.Run()
+	action := strings.ToLower(choice)
+	if err := executeAction(action); err != nil {
+		log.Printf("action %s failed: %v", choice, err)
+	}
+}
 
-		if err != nil {
-			log.Fatal(err)
+func executeAction(action string) error {
+	cfg, err := loadConfig()
+	if err != nil {
+		return err
+	}
+
+	env := detectEnvironment()
+	wm := detectWindowManager(env)
+	commands := cfg.getCommands(wm, action, env.Display)
+	if len(commands) == 0 {
+		return fmt.Errorf("no commands configured for %s", action)
+	}
+
+	return runCommands(action, commands)
+}
+
+func runCommands(action string, commands []string) error {
+	var lastErr error
+	for _, command := range commands {
+		if strings.TrimSpace(command) == "" {
+			continue
 		}
-	case "Lock":
-		if getDisplay() == x11 {
-
-			cmd := exec.Command("xdg-screensaver", "lock")
-			xerr := cmd.Run()
-			if xerr != nil {
-				log.Fatal(xerr)
-			}
-		} else {
-
-			cmd := exec.Command("swaylock", "-c", "000000", "-e")
-			werr := cmd.Run()
-			if werr != nil {
-				log.Fatal(werr)
-			}
-		}
-
-	case "Logout":
-		cmd := exec.Command("kill", "-9", "-1")
-		err := cmd.Run()
-
+		err := runShell(command)
 		if err != nil {
-			log.Fatal(err)
+			lastErr = err
+			continue
 		}
-	case "Shutdown":
-		cmd := exec.Command("shutdown", "now")
-		err := cmd.Run()
-
-		if err != nil {
-			log.Fatal(err)
-		}
-	case "Restart":
-		cmd := exec.Command("shutdown", "-r")
-		err := cmd.Run()
-
-		if err != nil {
-			log.Fatal(err)
-		}
-	case "Hibernate":
-		cmd := exec.Command("systemctl", "hibernate")
-		err := cmd.Run()
-
-		if err != nil {
-			log.Fatal(err)
+		lastErr = nil
+		if shouldStopAfterSuccess(action, command) {
+			return nil
 		}
 	}
+	return lastErr
+}
+
+func runShell(command string) error {
+	cmd := exec.Command("sh", "-c", command)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func shouldStopAfterSuccess(action, command string) bool {
+	trimmed := strings.TrimSpace(command)
+	if strings.HasSuffix(trimmed, "&") {
+		return false
+	}
+	if action == "suspend" || action == "hibernate" {
+		return true
+	}
+	return true
 }
 
 func initialModel() model {
 	return model{
-		choices: []string{"Suspend", "Lock", "Logout", "Shutdown", "Restart", "Hibernate"},
+		choices: []string{"Suspend", "Lock", "Logout", "Sleep", "Shutdown", "Restart", "Hibernate"},
 
 		// A map which indicates which choices are selected. We're using
 		// the  map like a mathematical set. The keys refer to the indexes
@@ -145,6 +134,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case strconv.Itoa(Logout + 1):
 			end("Logout")
+			return m, tea.Quit
+		case strconv.Itoa(Sleep + 1):
+			end("Sleep")
 			return m, tea.Quit
 		case strconv.Itoa(Shutdown + 1):
 			end("Shutdown")
